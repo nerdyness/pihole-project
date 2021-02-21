@@ -10,7 +10,6 @@ services:
       - "53:53/udp"
       - "67:67/udp"
       - "80:80/tcp"
-      - "443:443/tcp"
     env_file:
         - .env.pihole
     volumes:
@@ -28,3 +27,18 @@ services:
     env_file:
         - .env.upload
     restart: "no" # This is done via /etc/cron.d/upload-container
+
+  openvpn:
+    container_name: openvpn
+    image: openvpn:latest
+    ports:
+      - "443:1194/tcp"
+    volumes:
+      - 'ovpn-data-volume:/etc/openvpn/'
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped # Launch container on reboot or crash
+
+volumes:
+ ovpn-data-volume:
+   external: true

@@ -1,0 +1,5 @@
+# This is the cloned repo where I found this: git@github.com:kylemanna/docker-openvpn.git
+docker-openvpn
+
+# Avoid accidentally comitting any user config
+*.ovpn
