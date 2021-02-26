@@ -4,6 +4,7 @@ TAG=latest
 CMD=docker run --volume $(DOCKER_VOLUME):/etc/openvpn
 VPN_HOST=tcp://vpn.krist.tech:443
 USERNAME=sk
+SHELL:=/bin/bash
 
 .PHONY: help
 help: ## Prints this help/overview message
@@ -26,6 +27,8 @@ add-user: ## Adds a new user to the CA and dumps their ovpn config.
 .PHONY: get-user-config
 get-user-config: ## Fetches the USERNAME's ovpn config and dumps it in ./
 	$(CMD) --rm -it $(IMAGE_NAME):$(TAG) ovpn_getclient $(USERNAME) > $(USERNAME).ovpn
+	echo -e "\ndata-ciphers AES-256-GCM:AES-128-GCM\ndata-ciphers-fallback AES-256-CBC" >> $(USERNAME).ovpn # Add cipher to ovpn file
+	sed -i -e 's/\r//' $(USERNAME).ovpn # Remove DOS-style line endings
 
 .PHONY: debug
 debug: ## Run a container and drop into a bash
@@ -36,3 +39,5 @@ initial-setup: ## Run this first to create the docker volume and config
 	docker volume create --name $(DOCKER_VOLUME)
 	$(CMD) --rm $(IMAGE_NAME):$(TAG) ovpn_genconfig -u $(VPN_HOST)
 	$(CMD) --rm -it $(IMAGE_NAME):$(TAG) ovpn_initpki
+
+# .SILENT:

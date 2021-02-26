@@ -26,7 +26,7 @@ services:
     image: upload:latest
     env_file:
         - .env.upload
-    restart: "no" # This is done via /etc/cron.d/upload-container
+    restart: "no" # This is done via /etc/cron.d/containers
 
   openvpn:
     container_name: openvpn
@@ -38,6 +38,13 @@ services:
     cap_add:
       - NET_ADMIN
     restart: unless-stopped # Launch container on reboot or crash
+
+  dyndns:
+    container_name: dyndns
+    image: dyndns:latest
+    restart: "no" # This is done via /etc/cron.d/containers
+    env_file:
+        - .env.dyndns
 
 volumes:
  ovpn-data-volume:

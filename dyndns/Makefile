@@ -1,4 +1,4 @@
-IMAGE_NAME=upload
+IMAGE_NAME=dyndns
 TAG=latest
 NETWORK=containers_default
 RUN_DIR=..
@@ -22,7 +22,6 @@ run: ## Run a container from the latest image
 debug: ## Run a container and drop into a bash
 	docker run --rm -it \
 	           -v $$PWD/:/app \
-	           -v $$PWD/data:/data \
 	           --network $(NETWORK) \
 		   --env-file $(RUN_DIR)/.env.$(IMAGE_NAME) \
 	           $(IMAGE_NAME):$(TAG) /bin/bash
