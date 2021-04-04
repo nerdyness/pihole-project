@@ -20,3 +20,4 @@ run: ## Run a single CONTAINER via docker-compose
 .PHONY: cron
 cron: ## Links the ./cron file to /etc/cron.d/containers
 	sudo ln -sf $$PWD/cron /etc/cron.d/containers
+	tail /var/log/syslog

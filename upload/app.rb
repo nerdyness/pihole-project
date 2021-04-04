@@ -51,7 +51,7 @@ end
 sorted = {}
 response["data"].each do |entry|
   timestamp = Time.strptime(entry.first, '%s')
-  day = "#{timestamp.year}-#{timestamp.strftime("%m")}-#{timestamp.day}"
+  day = "#{timestamp.year}-#{timestamp.strftime("%m")}-#{timestamp.strftime("%d")}"
   sorted[day] ||= []
   sorted[day] << entry
 end
@@ -59,7 +59,7 @@ end
 # Write dictionary to files
 sorted.each do |day, records|
   timestamp = Time.strptime(records.first.first, '%s')
-  file = "/#{DESTINATION}/#{timestamp.year}/#{timestamp.strftime("%m")}/#{timestamp.day}/#{day}_#{timestamp.strftime('%H')}:#{timestamp.strftime('%M')}:#{timestamp.strftime('%S')}.json"
+  file = "/#{DESTINATION}/#{timestamp.year}/#{timestamp.strftime("%m")}/#{timestamp.strftime("%d")}/#{day}_#{timestamp.strftime('%H')}:#{timestamp.strftime('%M')}:#{timestamp.strftime('%S')}.json"
   FileUtils.mkdir_p(File.dirname(file))
   File.write(file, JSON.generate(:data => records))
 end

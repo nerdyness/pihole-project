@@ -1,5 +1,6 @@
 FROM ruby:3
 WORKDIR /app
+RUN echo "Europe/Oslo" > /etc/timezone && cp /usr/share/zoneinfo/`cat /etc/timezone` /etc/localtime
 RUN gem install pry
 ADD Gemfile* ./
 RUN bundle install

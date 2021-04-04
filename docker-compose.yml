@@ -39,12 +39,12 @@ services:
       - NET_ADMIN
     restart: unless-stopped # Launch container on reboot or crash
 
-  dyndns:
-    container_name: dyndns
-    image: dyndns:latest
+  dyndns.aws:
+    container_name: dyndns.aws
+    image: dyndns.aws:latest
     restart: "no" # This is done via /etc/cron.d/containers
     env_file:
-        - .env.dyndns
+        - .env.dyndns.aws
 
 volumes:
  ovpn-data-volume:
