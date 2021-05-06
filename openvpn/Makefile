@@ -1,6 +1,6 @@
 IMAGE_NAME=openvpn
-DOCKER_VOLUME=ovpn-data-volume
 TAG=latest
+DOCKER_VOLUME=ovpn-data-volume
 CMD=docker run --volume $(DOCKER_VOLUME):/etc/openvpn
 VPN_HOST=tcp://vpn.krist.tech:443
 USERNAME=sk

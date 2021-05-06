@@ -1,5 +1,6 @@
 IMAGE_NAME=upload
 TAG=latest
+DOCKER_VOLUME=upload-volume
 NETWORK=containers_default
 RUN_DIR=..
 
@@ -14,6 +15,7 @@ build: ## Rebuild the docker image
 .PHONY: run
 run: ## Run a container from the latest image
 	docker run --rm \
+		   --volume $(DOCKER_VOLUME):/data \
 	           --network $(NETWORK) \
 		   --env-file $(RUN_DIR)/.env.$(IMAGE_NAME) \
 	   	   $(IMAGE_NAME):$(TAG)
@@ -23,6 +25,7 @@ debug: ## Run a container and drop into a bash
 	docker run --rm -it \
 	           -v $$PWD/:/app \
 	           -v $$PWD/data:/data \
+		   --volume $(DOCKER_VOLUME):/data \
 	           --network $(NETWORK) \
 		   --env-file $(RUN_DIR)/.env.$(IMAGE_NAME) \
 	           $(IMAGE_NAME):$(TAG) /bin/bash

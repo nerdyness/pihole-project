@@ -8,6 +8,7 @@ require "time"
 
 API_TOKEN = "#{ENV['API_TOKEN']}".freeze
 DESTINATION = "/data".freeze
+MARKER = "#{DESTINATION}/.marker".freeze
 
 def debug(msg)
   puts "#{Time.now.strftime("%F_%T")} #{msg}"
@@ -19,6 +20,13 @@ def s3_put_object(file, obj, bucket_name='pihole-raw-uploads')
   target_obj = s3.bucket(bucket_name).object(obj)
   target_obj.upload_file(file)
   debug "Successfully uploaded #{file}!"
+end
+
+def delete_files(path="/data")
+  return false unless Dir.exist?(path)
+  Dir.chdir(path)  # Change directory to path.
+  all_files = Dir.glob("**/*.json")
+  all_files.each { |file| File.delete("#{path}/#{file}") }
 end
 
 def sync_data(path="/data")
@@ -48,6 +56,8 @@ else
   debug "Fetched entries from Pihole API"
 end
 
+delete_files
+
 sorted = {}
 response["data"].each do |entry|
   timestamp = Time.strptime(entry.first, '%s')
@@ -56,12 +66,25 @@ response["data"].each do |entry|
   sorted[day] << entry
 end
 
+# Store a timestamp here. Yes there can be duplicates but these either are logged or not.
+last_marker = 1620295203 # last timestamp prior to the change
+last_marker = File.read(MARKER).to_i if File.exist?(MARKER)
+
 # Write dictionary to files
 sorted.each do |day, records|
-  timestamp = Time.strptime(records.first.first, '%s')
+  # Check to see if we need to even iterate through this day. This could be yesterday's data with a marker from an hour ago.
+  next if last_marker > records.last.first.to_i
+  # See how many records we can keep
+  to_write = records.map { |rec| rec if last_marker < rec.first.to_i }.compact
+
+  # Grab the oldest timestamp for the filename
+  timestamp = Time.strptime(to_write.last.first, '%s')
   file = "/#{DESTINATION}/#{timestamp.year}/#{timestamp.strftime("%m")}/#{timestamp.strftime("%d")}/#{day}_#{timestamp.strftime('%H')}:#{timestamp.strftime('%M')}:#{timestamp.strftime('%S')}.json"
   FileUtils.mkdir_p(File.dirname(file))
-  File.write(file, JSON.generate(:data => records))
+  File.write(file, JSON.generate(:data => to_write))
+
+  new_marker = to_write.last.first
+  File.write(MARKER, new_marker.to_s)
 end
 
 # Sync data from files to S3 for further processing
