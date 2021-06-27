@@ -1,0 +1,57 @@
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+from awsglue.dynamicframe import DynamicFrame
+from pyspark.sql.functions import explode
+from pyspark.sql.functions import from_unixtime
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+sc = SparkContext()
+glueContext = GlueContext(sc.getOrCreate())
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+## Logging the logs!
+logger = glueContext.get_logger()
+sc.setLogLevel('INFO')
+
+## @type: DataSource
+## @args: [database = "pihole-raw", table_name = "pihole_raw_uploads", transformation_ctx = "datasource0"]
+## @return: datasource0
+## @inputs: []
+pi_raw_dyf = glueContext.create_dynamic_frame.from_catalog(
+             database="pihole-raw",
+             table_name="pihole_raw_uploads",
+             transformation_ctx = "datasource0")
+
+df = pi_raw_dyf.toDF()
+if (df.count() == 0):
+    sys.exit()
+
+exploded = df.select(explode(df.data))
+processed = exploded.select(
+  exploded.col[0].alias("epoch_timestamp").cast("long"),
+  exploded.col[1].alias("query_type"),
+  exploded.col[2].alias("domain"),
+  exploded.col[3].alias("client"),
+  exploded.col[4].alias("query_status").cast("int"),
+  exploded.col[5].alias("dnssec").cast("int"),
+  exploded.col[6].alias("reply").cast("int"),
+  exploded.col[7].alias("delay").cast("float"),
+  exploded.col[8].alias("CNAME_domain"),
+  exploded.col[9].alias("regex_idx").cast("int"),
+  exploded.col[10].alias("upstream_name"),
+).dropDuplicates()
+
+timestamp = processed.withColumn("timestamp", from_unixtime(processed.epoch_timestamp).cast("timestamp"))
+
+pi_dyf = DynamicFrame.fromDF(timestamp, glueContext, "Pihole Data")
+glueContext.write_dynamic_frame.from_options(pi_dyf, connection_type = "s3", connection_options = {"path": "s3://pihole-processed/"}, format = "parquet")
+
+job.commit()
+
