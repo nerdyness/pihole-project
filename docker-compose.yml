@@ -1,0 +1,55 @@
+version: "3"
+
+# More info at https://github.com/pi-hole/docker-pi-hole/ and https://docs.pi-hole.net/
+services:
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "67:67/udp"
+      - "80:80/tcp"
+    env_file:
+        - .env.pihole
+    volumes:
+      - './pihole/etc-pihole/:/etc/pihole/'
+      - './pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/'
+    # Recommended but not required (DHCP needs NET_ADMIN)
+    #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped # Launch container on reboot or crash
+
+  upload:
+    container_name: upload
+    image: upload:latest
+    volumes:
+      - 'upload-volume:/data/'
+    env_file:
+        - .env.upload
+    restart: "no" # This is done via /etc/cron.d/containers
+
+  openvpn:
+    container_name: openvpn
+    image: openvpn:latest
+    ports:
+      - "443:1194/tcp"
+    volumes:
+      - 'ovpn-data-volume:/etc/openvpn/'
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped # Launch container on reboot or crash
+
+  dyndns.aws:
+    container_name: dyndns.aws
+    image: dyndns.aws:latest
+    restart: "no" # This is done via /etc/cron.d/containers
+    env_file:
+        - .env.dyndns.aws
+
+volumes:
+ upload-volume:
+   external: true
+ ovpn-data-volume:
+   external: true
