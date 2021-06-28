@@ -22,7 +22,7 @@ def s3_put_object(file, obj, bucket_name='pihole-raw-uploads')
   debug "Successfully uploaded #{file}!"
 end
 
-def delete_files(path="/data")
+def delete_files(path=DESTINATION)
   return false unless Dir.exist?(path)
   Dir.chdir(path)  # Change directory to path.
   all_files = Dir.glob("**/*.json")
@@ -52,9 +52,8 @@ end
 if response.empty?
   debug "Nothhing received from Pihole API"
   exit 1
-else
-  debug "Fetched entries from Pihole API"
 end
+debug "Fetched entries from Pihole API"
 
 delete_files
 
@@ -66,11 +65,12 @@ response["data"].each do |entry|
   sorted[day] << entry
 end
 
-# Store a timestamp here. Yes there can be duplicates but these either are logged or not.
+# Store a timestamp here. Yes there can be duplicates on one timestamp but that
+# doesn't matter since they are either logged or not.
 last_marker = 1620295203 # last timestamp prior to the change
 last_marker = File.read(MARKER).to_i if File.exist?(MARKER)
 
-# Write dictionary to files
+# Write "sorted" dictionary to the filesystem
 sorted.each do |day, records|
   # Check to see if we need to even iterate through this day. This could be yesterday's data with a marker from an hour ago.
   next if last_marker > records.last.first.to_i
