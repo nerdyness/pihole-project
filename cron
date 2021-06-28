@@ -1,4 +1,4 @@
-# Run upload container at midnight
+# Run upload container every 12 hours
 0 */12 * * * sk cd ~sk/containers/ && make start CONTAINER=upload
 
 # Run dynDNS container every hour on the hour
