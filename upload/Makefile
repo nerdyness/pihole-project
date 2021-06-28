@@ -23,8 +23,7 @@ run: ## Run a container from the latest image
 .PHONY: debug
 debug: ## Run a container and drop into a bash
 	docker run --rm -it \
-	           -v $$PWD/:/app \
-	           -v $$PWD/data:/data \
+	           --volume $$PWD/:/app \
 		   --volume $(DOCKER_VOLUME):/data \
 	           --network $(NETWORK) \
 		   --env-file $(RUN_DIR)/.env.$(IMAGE_NAME) \
