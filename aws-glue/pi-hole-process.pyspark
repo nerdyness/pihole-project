@@ -7,6 +7,7 @@ from awsglue.job import Job
 from awsglue.dynamicframe import DynamicFrame
 from pyspark.sql.functions import explode
 from pyspark.sql.functions import from_unixtime
+from pyspark.sql.functions import when
 
 ## @params: [JOB_NAME]
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
@@ -33,7 +34,10 @@ df = pi_raw_dyf.toDF()
 if (df.count() == 0):
     sys.exit()
 
+# Get rid of that annoying nested array
 exploded = df.select(explode(df.data))
+
+# Assign names and data types to the columns
 processed = exploded.select(
   exploded.col[0].alias("epoch_timestamp").cast("long"),
   exploded.col[1].alias("query_type"),
@@ -48,7 +52,13 @@ processed = exploded.select(
   exploded.col[10].alias("upstream_name"),
 ).dropDuplicates()
 
-timestamp = processed.withColumn("timestamp", from_unixtime(processed.epoch_timestamp).cast("timestamp"))
+# Map my DNS names to catch those times when DNS wasn't set up yet.
+mapped = processed.withColumn("client", \
+  when(processed.client == "172.22.22.22", "sk-mac.sk.lan") \
+  .when(processed.client == "172.22.22.34", "bigmac.sk.lan") \
+  .otherwise(processed.client))
+
+timestamp = mapped.withColumn("timestamp", from_unixtime(mapped.epoch_timestamp).cast("timestamp"))
 
 pi_dyf = DynamicFrame.fromDF(timestamp, glueContext, "Pihole Data")
 glueContext.write_dynamic_frame.from_options(pi_dyf, connection_type = "s3", connection_options = {"path": "s3://pihole-processed/"}, format = "parquet")
