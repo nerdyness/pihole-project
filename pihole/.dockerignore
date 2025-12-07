@@ -1,0 +1,2 @@
+# Ignore stuff we can't read anyway because it's owned by root
+etc-pihole/

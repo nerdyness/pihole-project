@@ -1,17 +1,23 @@
 version: "3"
 
-# More info at https://github.com/pi-hole/docker-pi-hole/ and https://docs.pi-hole.net/
 services:
+  # More info at https://github.com/pi-hole/docker-pi-hole/ and https://docs.pi-hole.net/
   pihole:
     container_name: pihole
-    image: pihole/pihole:latest
-    ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-      - "67:67/udp"
-      - "80:80/tcp"
+    image: my-pi-hole:latest
+    dns:
+      - 1.1.1.1
     env_file:
-        - .env.pihole
+      - .env.pihole
+    # Needed so DHCP works! It uses
+    # * udp/53
+    # * tcp/53
+    # * tcp/80
+    # * tcp/443
+    network_mode: "host"
+    environment:
+      # ServerIP is needed for pihole to resolve its own hostname and pi.hole
+      ServerIP: 192.168.0.1
     volumes:
       - './pihole/etc-pihole/:/etc/pihole/'
       - './pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/'
@@ -21,35 +27,78 @@ services:
       - NET_ADMIN
     restart: unless-stopped # Launch container on reboot or crash
 
-  upload:
-    container_name: upload
-    image: upload:latest
-    volumes:
-      - 'upload-volume:/data/'
-    env_file:
-        - .env.upload
-    restart: "no" # This is done via /etc/cron.d/containers
+  # A custom container to upload data to AWS
+  unify:
+    container_name: unifi
+    image: jacobalberty/unifi
+    environment:
+      SYSTEM_IP: 172.22.22.1
+      TZ: 'Europe/Oslo'
 
-  openvpn:
-    container_name: openvpn
-    image: openvpn:latest
     ports:
-      - "443:1194/tcp"
+      - "3478:3478/udp" # STUN
+      - "6789:6789/tcp" # Speed test
+      - "8080:8080/tcp" # Device/ controller comm.
+      - "8443:8443/tcp" # Controller GUI/API as seen in a web browser
+      - "8880:8880/tcp" # HTTP portal redirection
+      - "8843:8843/tcp" # HTTPS portal redirection
+      - "10001:10001/udp" # AP discovery
     volumes:
-      - 'ovpn-data-volume:/etc/openvpn/'
-    cap_add:
-      - NET_ADMIN
-    restart: unless-stopped # Launch container on reboot or crash
+      - './unifi:/usr/lib/unifi'
+    restart: "unless-stopped" # This is done via /etc/cron.d/containers
 
-  dyndns.aws:
-    container_name: dyndns.aws
-    image: dyndns.aws:latest
-    restart: "no" # This is done via /etc/cron.d/containers
-    env_file:
-        - .env.dyndns.aws
+  # A custom container to upload data to AWS
+  # upload:
+  #   container_name: upload
+  #   image: upload:latest
+  #   volumes:
+  #     - 'upload-volume:/data/'
+  #   env_file:
+  #       - .env.upload
+  #   restart: "no" # This is done via /etc/cron.d/containers
+
+      # # Allows an openvpn connection (mostly for my Mum and me)
+      # openvpn:
+      #   container_name: openvpn
+      #   image: openvpn:latest
+      #   ports:
+      #     - "443:1194/tcp"
+      #   volumes:
+      #     - 'ovpn-data-volume:/etc/openvpn/'
+      #   cap_add:
+      #     - NET_ADMIN
+      #   restart: unless-stopped # Launch container on reboot or crash
+
+      # # Updates my home IP in AWS for the openvpn container
+      # dyndns.aws:
+      #   container_name: dyndns.aws
+      #   image: dyndns.aws:latest
+      #   restart: "no" # This is done via /etc/cron.d/containers
+      #   env_file:
+      #       - .env.dyndns.aws
+
+  # A logging solution
+  dozzle:
+    container_name: dozzle
+    image: amir20/dozzle:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 9090:8080
+
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    ports:
+      - 9000:9000
 
 volumes:
  upload-volume:
    external: true
  ovpn-data-volume:
+   external: true
+ portainer_data:
    external: true

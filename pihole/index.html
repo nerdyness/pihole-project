@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Server Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 2.8rem;
+      margin-bottom: 10px;
+    }
+
+    p.subtitle {
+      font-size: 1.2rem;
+      opacity: 0.85;
+      margin-bottom: 40px;
+    }
+
+    .links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(6px);
+      padding: 25px;
+      border-radius: 18px;
+      text-align: center;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .footer {
+      margin-top: 50px;
+      opacity: 0.65;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Server Dashboard</h1>
+  <p class="subtitle">Quick access to your local services</p>
+
+  <div class="links">
+    <div class="card">
+      <a href="https://192.168.0.2/admin/" target="_blank">Pi‑hole</a>
+    </div>
+
+    <div class="card">
+      <a href="http://192.168.0.2:9000/" target="_blank">Portainer</a>
+    </div>
+
+    <div class="card">
+      <a href="http://192.168.0.2:9090/" target="_blank">Dozzle</a>
+    </div>
+  </div>
+
+  <div class="footer">Custom Dashboard • Served by Pi‑hole</div>
+</body>
+</html>
+
