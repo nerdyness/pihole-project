@@ -7,15 +7,15 @@ help: ## Prints this help/overview message
 
 .PHONY: start
 start: ## Start all containers
-	docker-compose up -d
+	docker compose up -d
 
 .PHONY: stop
 stop: ## Stop all containers
-	docker-compose down
+	docker compose down
 
 .PHONY: run
 run: ## Run a single CONTAINER via docker-compose
-	docker-compose up -d $(CONTAINER)
+	docker compose up -d $(CONTAINER)
 
 .PHONY: cron
 cron: ## Links the ./cron file to /etc/cron.d/containers
